@@ -29,6 +29,9 @@ public abstract class BacktrackingSearch <X, V> {
      * @param tail
      * @param <X>
      */
+    protected Map<X, Variable<X, V>> allVariables;
+    protected Set<X> assigned;
+    protected CSPProblem<X, V> problem;
     public  record Arc<X>(X head, X tail){
         @Override
         public boolean equals(Object o){
@@ -47,12 +50,6 @@ public abstract class BacktrackingSearch <X, V> {
         }
     }
 
-    private Map<X,Variable<X,V>> allVariables;
-
-    //keeps track of the variables that have been assigned so far
-    private final Set<X> assigned;
-
-    private final CSPProblem<X,V> problem;
 
     public BacktrackingSearch(CSPProblem<X,V> problem){
         this.problem = problem;
@@ -68,9 +65,23 @@ public abstract class BacktrackingSearch <X, V> {
      * @param arcs the list of arcs for which consistency will be maintained
      * @return false if consistency could not be maintained, true otherwise
      */
-    public boolean AC3(Queue<Arc<X>> arcs){
-        //TODO
-        return false;
+
+    public boolean AC3(Queue<Arc<X>> arcs) {
+        while (!arcs.isEmpty()) {
+            Arc<X> arc = arcs.poll();
+            if (revise(arc.head(), arc.tail())) {
+                if (allVariables.get(arc.head()).domain().isEmpty()) {
+                    return false; // Inconsistent assignment
+                }
+                // Add all arcs where head is the tail to the queue
+                for (X neighbor : problem.getNeighborsOf(arc.head())) {
+                    if (!neighbor.equals(arc.tail())) {
+                        arcs.add(new Arc<>(neighbor, arc.head()));
+                    }
+                }
+            }
+        }
+        return true; // All constraints satisfied
     }
 
     /**
@@ -78,14 +89,22 @@ public abstract class BacktrackingSearch <X, V> {
      * pre-assigned values as part of the problem.
      * @return
      */
-    public boolean initAC3(){
-        //TODO: create a queue that contains all the arcs; call AC3() with this queue.
+    public boolean initAC3() {
+        // Create a queue to store all arcs
         Queue<Arc<X>> arcs = new LinkedList<>();
-        for(X v : allVariables.keySet()){
-            for(X n : problem.getNeighborsOf(v)){
-                arcs.add(new Arc<>(v,n));
+
+        // Iterate through all variables
+        for (X v : allVariables.keySet()) {
+            // Get neighbors of the current variable
+            List<X> neighbors = problem.getNeighborsOf(v);
+
+            // For each neighbor, create an arc and add it to the queue
+            for (X n : neighbors) {
+                arcs.add(new Arc<>(v, n));
             }
         }
+
+        // Call the AC3 method with the created queue of arcs
         return AC3(arcs);
     }
 
