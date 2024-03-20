@@ -2,9 +2,6 @@ package csp_solution;
 
 import core_algorithms.BacktrackingSearch;
 import csp_problems.Sudoku;
-import java.util.LinkedList;
-import java.util.Queue;
-
 
 public class BacktrackingSearch_Sudoku extends BacktrackingSearch<String,Integer> {
 
